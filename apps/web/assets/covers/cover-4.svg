@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5f0f40"/>
+      <stop offset="100%" stop-color="#9a031e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#g)"/>
+  <circle cx="1350" cy="700" r="220" fill="rgba(255,255,255,0.12)"/>
+  <circle cx="300" cy="180" r="120" fill="rgba(255,255,255,0.16)"/>
+  <text x="120" y="220" fill="#ffffff" font-size="66" font-family="Microsoft YaHei, Arial, sans-serif" font-weight="700">Health Service Day</text>
+  <text x="120" y="300" fill="#ffeef3" font-size="34" font-family="Microsoft YaHei, Arial, sans-serif">Medical Assistance Activity</text>
+</svg>

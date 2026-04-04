@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>注册 - 社区志愿服务平台</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-page="register">
+    <div class="site-shell">
+      <header class="topbar">
+        <div class="site-head">
+          <a class="site-title" href="/index.html">社区志愿服务平台</a>
+          <span class="site-caption">注册</span>
+        </div>
+        <nav class="main-nav" id="main-nav">
+          <a href="/index.html">首页</a>
+          <a href="/activities.html">活动中心</a>
+          <a href="/register.html">注册</a>
+          <a href="/login.html">登录</a>
+        </nav>
+      </header>
+
+      <main class="page page-auth">
+        <section class="auth-box auth-box-wide">
+          <div class="auth-side">
+            <h1>创建账号</h1>
+            <div class="role-switch" id="register-role-switch">
+              <button class="role-switch-button is-active" type="button" data-role="volunteer">志愿者</button>
+              <button class="role-switch-button" type="button" data-role="organization">组织者</button>
+            </div>
+            <p class="item-meta">组织者账号需要管理员审核通过后才能发布活动。</p>
+          </div>
+
+          <div class="auth-card">
+            <form id="register-form" class="form-grid form-grid-wide" method="post">
+              <input id="register-role" type="hidden" name="role" value="volunteer" />
+              <label class="field">
+                <span>姓名</span>
+                <input name="name" type="text" required />
+              </label>
+              <label class="field">
+                <span>手机号</span>
+                <input name="mobile" type="tel" required />
+              </label>
+              <label class="field">
+                <span>密码</span>
+                <input name="password" type="password" required />
+              </label>
+              <label class="field">
+                <span>所属社区/机构</span>
+                <input name="community" type="text" required />
+              </label>
+              <label class="field">
+                <span>年龄</span>
+                <input name="age" type="number" min="1" max="120" placeholder="可稍后完善" />
+              </label>
+              <label class="field">
+                <span>性别</span>
+                <select name="gender">
+                  <option value="">请选择</option>
+                  <option value="MALE">男</option>
+                  <option value="FEMALE">女</option>
+                  <option value="OTHER">其他</option>
+                </select>
+              </label>
+              <label class="field field-span">
+                <span>联系方式</span>
+                <input name="contactPhone" type="text" placeholder="手机号、微信、邮箱等" />
+              </label>
+
+              <label class="field field-span" id="register-proof-field" hidden>
+                <span>组织者资质材料</span>
+                <textarea
+                  name="verificationMaterials"
+                  rows="4"
+                  placeholder="请填写机构资质、负责人信息、运营证明等"
+                ></textarea>
+              </label>
+
+              <label class="field field-span">
+                <span>简介</span>
+                <textarea name="bio" rows="4"></textarea>
+              </label>
+              <button class="button button-primary button-block field-span" type="submit">提交注册</button>
+            </form>
+            <div id="register-feedback" class="feedback" hidden></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js?v=20260404_6"></script>
+  </body>
+</html>

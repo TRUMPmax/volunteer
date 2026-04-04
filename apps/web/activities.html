@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>活动中心 - 社区志愿服务平台</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-page="activities">
+    <div class="site-shell">
+      <header class="topbar">
+        <div class="site-head">
+          <a class="site-title" href="/index.html">社区志愿服务平台</a>
+          <span class="site-caption">活动中心</span>
+        </div>
+        <nav class="main-nav" id="main-nav">
+          <a href="/index.html">首页</a>
+          <a href="/activities.html">活动中心</a>
+          <a href="/register.html">注册</a>
+          <a href="/login.html">登录</a>
+        </nav>
+      </header>
+
+      <main class="page page-activities">
+        <section class="toolbar">
+          <div class="toolbar-group">
+            <label class="field field-inline">
+              <span>分类</span>
+              <select id="activity-category">
+                <option value="">全部</option>
+              </select>
+            </label>
+            <label class="field field-inline field-inline-wide">
+              <span>关键词</span>
+              <input id="activity-keyword" type="text" placeholder="活动标题 / 地点" />
+            </label>
+          </div>
+          <div class="toolbar-actions" id="activity-page-actions"></div>
+        </section>
+
+        <section class="panel">
+          <div id="activity-list" class="activity-grid"></div>
+          <div id="activity-pagination" class="pagination"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js?v=20260404_6"></script>
+  </body>
+</html>

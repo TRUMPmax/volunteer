@@ -1,0 +1,39 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.local
+.pytest_cache/
+.mypy_cache/
+dist/
+build/
+target/
+.local-runtime/
+
+# Java compiled files
+*.class
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+*.iml
+.eclipse/
+.settings/
+.project
+.classpath
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Maven local cache (large, no need to commit)
+.m2-cache/
+.m2/
+
+# WorkBuddy memory (optional, remove if you want to track it)
+.workbuddy/memory/

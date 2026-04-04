@@ -1,0 +1,20 @@
+server:
+  port: 8002
+
+spring:
+  application:
+    name: volunteer-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${LOCAL_MYSQL_HOST:127.0.0.1}:${LOCAL_MYSQL_PORT:3306}/volunteer_volunteer_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
+    username: ${SPRING_DATASOURCE_USERNAME:${LOCAL_MYSQL_USER}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${LOCAL_MYSQL_PASSWORD}}
+    hikari:
+      maximum-pool-size: 5
+  jackson:
+    time-zone: Asia/Shanghai
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

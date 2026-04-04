@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>工作台 - 社区志愿服务平台</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-page="dashboard">
+    <div class="site-shell">
+      <header class="topbar">
+        <div class="site-head">
+          <a class="site-title" href="/index.html">社区志愿服务平台</a>
+          <span class="site-caption">工作台</span>
+        </div>
+        <nav class="main-nav" id="main-nav">
+          <a href="/index.html">首页</a>
+          <a href="/activities.html">活动中心</a>
+          <a href="/register.html">注册</a>
+          <a href="/login.html">登录</a>
+        </nav>
+      </header>
+
+      <main class="page page-dashboard">
+        <section class="panel user-banner">
+          <div id="dashboard-user" class="user-card"></div>
+          <div id="dashboard-actions" class="toolbar-actions"></div>
+        </section>
+
+        <section id="dashboard-stats" class="stats-grid"></section>
+
+        <section class="panel-row">
+          <section class="panel">
+            <div class="panel-head">
+              <h2 id="dashboard-section-a-title">事项</h2>
+              <a id="dashboard-section-a-link" class="text-link" href="/activities.html">更多</a>
+            </div>
+            <div id="dashboard-section-a" class="list-panel"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2 id="dashboard-section-b-title">列表</h2>
+              <a id="dashboard-section-b-link" class="text-link" href="/dashboard.html">更多</a>
+            </div>
+            <div id="dashboard-section-b" class="list-panel"></div>
+          </section>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>通知</h2>
+          </div>
+          <div id="dashboard-notices" class="list-panel"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js?v=20260404_6"></script>
+  </body>
+</html>

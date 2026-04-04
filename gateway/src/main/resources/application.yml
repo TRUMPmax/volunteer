@@ -1,0 +1,22 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: gateway
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+services:
+  user:
+    base-url: ${USER_SERVICE_URL:http://localhost:8001}
+  volunteer:
+    base-url: ${VOLUNTEER_SERVICE_URL:http://localhost:8002}
+  activity:
+    base-url: ${ACTIVITY_SERVICE_URL:http://localhost:8003}
+  community:
+    base-url: ${COMMUNITY_SERVICE_URL:http://localhost:8004}

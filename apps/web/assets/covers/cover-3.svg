@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#283618"/>
+      <stop offset="100%" stop-color="#606c38"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#g)"/>
+  <path d="M0 640 C280 560 540 720 860 620 C1120 540 1310 640 1600 560 L1600 900 L0 900 Z" fill="rgba(255,255,255,0.14)"/>
+  <text x="120" y="220" fill="#ffffff" font-size="66" font-family="Microsoft YaHei, Arial, sans-serif" font-weight="700">Youth Reading Partner</text>
+  <text x="120" y="300" fill="#f4ffe8" font-size="34" font-family="Microsoft YaHei, Arial, sans-serif">Learning Support Session</text>
+</svg>

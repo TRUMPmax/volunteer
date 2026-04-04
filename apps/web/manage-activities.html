@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>活动维护 - 社区志愿服务平台</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-page="manage-activities">
+    <div class="site-shell">
+      <header class="topbar">
+        <div class="site-head">
+          <a class="site-title" href="/index.html">社区志愿服务平台</a>
+          <span class="site-caption">活动维护</span>
+        </div>
+        <nav class="main-nav" id="main-nav">
+          <a href="/index.html">首页</a>
+          <a href="/activities.html">活动中心</a>
+          <a href="/register.html">注册</a>
+          <a href="/login.html">登录</a>
+        </nav>
+      </header>
+
+      <main class="page page-manage">
+        <section class="panel manage-layout">
+          <div class="manage-list-wrap">
+            <div class="panel-head">
+              <h2>我发布的活动</h2>
+            </div>
+            <div id="manage-activity-list" class="manage-list"></div>
+          </div>
+
+          <div class="manage-form-wrap">
+            <div class="panel-head">
+              <h2>编辑活动</h2>
+            </div>
+            <form id="manage-form" class="form-grid" hidden>
+              <input name="activityId" type="hidden" />
+              <input name="coverImageCurrent" type="hidden" />
+              <label class="field">
+                <span>活动标题</span>
+                <input name="title" type="text" required />
+              </label>
+              <label class="field">
+                <span>活动分类</span>
+                <input name="category" type="text" required />
+              </label>
+              <label class="field">
+                <span>活动地点</span>
+                <input name="location" type="text" required />
+              </label>
+              <label class="field">
+                <span>联系电话</span>
+                <input name="contactMobile" type="tel" required />
+              </label>
+              <label class="field">
+                <span>开始时间</span>
+                <input name="startAt" type="datetime-local" required />
+              </label>
+              <label class="field">
+                <span>结束时间</span>
+                <input name="endAt" type="datetime-local" required />
+              </label>
+              <label class="field">
+                <span>人数上限</span>
+                <input name="capacity" type="number" min="1" required />
+              </label>
+              <label class="field">
+                <span>更换封面</span>
+                <input id="manage-cover-file" name="coverFile" type="file" accept="image/*" />
+              </label>
+              <div class="field">
+                <span>封面预览</span>
+                <div class="cover-preview-wrap">
+                  <img id="manage-cover-preview" class="cover-preview" alt="封面预览" />
+                </div>
+              </div>
+              <label class="field">
+                <span>活动说明</span>
+                <textarea name="description" rows="6" required></textarea>
+              </label>
+              <button class="button button-primary button-block" type="submit">保存更新</button>
+            </form>
+
+            <form id="manage-notice-form" class="form-grid" hidden>
+              <input name="activityId" type="hidden" />
+              <div class="panel-head">
+                <h2>通知参与志愿者</h2>
+              </div>
+              <label class="field">
+                <span>通知标题</span>
+                <input name="title" type="text" required placeholder="例如：活动时间调整通知" />
+              </label>
+              <label class="field">
+                <span>通知内容</span>
+                <textarea
+                  name="content"
+                  rows="5"
+                  required
+                  placeholder="可编辑时间变更、场地变更、集合要求等信息"
+                ></textarea>
+              </label>
+              <button class="button button-light button-block" type="submit">发送通知</button>
+              <div id="manage-notice-feedback" class="feedback" hidden></div>
+            </form>
+
+            <div id="manage-empty" class="empty-state">请选择左侧活动进行维护</div>
+            <div id="manage-feedback" class="feedback" hidden></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js?v=20260404_6"></script>
+  </body>
+</html>

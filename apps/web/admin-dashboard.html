@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>管理员后台 - 社区志愿服务平台</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-page="admin-dashboard">
+    <div class="site-shell">
+      <header class="topbar">
+        <div class="site-head">
+          <a class="site-title" href="/index.html">社区志愿服务平台</a>
+          <span class="site-caption">管理员后台</span>
+        </div>
+        <nav class="main-nav" id="main-nav">
+          <a href="/admin-dashboard.html">审核中心</a>
+          <a href="/activities.html">活动中心</a>
+        </nav>
+      </header>
+
+      <main class="page">
+        <section class="panel-row">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>组织者审核</h2>
+            </div>
+            <div id="admin-org-list" class="list-panel"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>活动申请审核</h2>
+            </div>
+            <div id="admin-proposal-list" class="list-panel"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js?v=20260404_6"></script>
+  </body>
+</html>

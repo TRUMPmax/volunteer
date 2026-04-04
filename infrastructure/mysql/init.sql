@@ -1,0 +1,15 @@
+CREATE DATABASE IF NOT EXISTS volunteer_user_db
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_unicode_ci;
+
+CREATE DATABASE IF NOT EXISTS volunteer_volunteer_db
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_unicode_ci;
+
+CREATE DATABASE IF NOT EXISTS volunteer_activity_db
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_unicode_ci;
+
+CREATE DATABASE IF NOT EXISTS volunteer_community_db
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_unicode_ci;

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>社区志愿服务平台</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-page="home">
+    <div class="site-shell">
+      <header class="topbar">
+        <div class="site-head">
+          <a class="site-title" href="/index.html">社区志愿服务平台</a>
+          <span class="site-caption">首页</span>
+        </div>
+        <nav class="main-nav" id="main-nav">
+          <a href="/index.html">首页</a>
+          <a href="/activities.html">活动中心</a>
+          <a href="/register.html">注册</a>
+          <a href="/login.html">登录</a>
+        </nav>
+      </header>
+
+      <main class="page page-home">
+        <section class="hero hero-compact">
+          <div class="hero-main">
+            <h1>真实活动数据，按角色分层协作</h1>
+            <div class="hero-actions">
+              <a class="button button-primary" href="/activities.html">活动中心</a>
+              <a class="button button-light" href="/dashboard.html">进入工作台</a>
+            </div>
+          </div>
+          <div id="home-stats" class="stats-grid"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>活动轮播</h2>
+            <a class="text-link" href="/activities.html">全部活动</a>
+          </div>
+          <div id="home-carousel" class="carousel-panel"></div>
+        </section>
+
+        <section class="panel-row">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>近期活动</h2>
+              <a class="text-link" href="/activities.html">进入活动中心</a>
+            </div>
+            <div id="home-activities" class="list-panel"></div>
+          </section>
+
+          <section class="panel panel-narrow">
+            <div class="panel-head">
+              <h2>通知</h2>
+            </div>
+            <div id="home-notices" class="list-panel"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js?v=20260404_6"></script>
+  </body>
+</html>

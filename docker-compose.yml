@@ -1,0 +1,100 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: volunteer-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./infrastructure/mysql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "3306:3306"
+
+  user-service:
+    build:
+      context: ./services/user-service
+    container_name: volunteer-user-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/volunteer_user_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8001:8001"
+
+  volunteer-service:
+    build:
+      context: ./services/volunteer-service
+    container_name: volunteer-volunteer-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/volunteer_volunteer_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8002:8002"
+
+  activity-service:
+    build:
+      context: ./services/activity-service
+    container_name: volunteer-activity-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/volunteer_activity_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8003:8003"
+
+  community-service:
+    build:
+      context: ./services/community-service
+    container_name: volunteer-community-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/volunteer_community_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8004:8004"
+
+  gateway:
+    build:
+      context: ./gateway
+    container_name: volunteer-gateway
+    environment:
+      USER_SERVICE_URL: http://user-service:8001
+      VOLUNTEER_SERVICE_URL: http://volunteer-service:8002
+      ACTIVITY_SERVICE_URL: http://activity-service:8003
+      COMMUNITY_SERVICE_URL: http://community-service:8004
+    depends_on:
+      - user-service
+      - volunteer-service
+      - activity-service
+      - community-service
+    ports:
+      - "8000:8000"
+
+  web:
+    build:
+      context: ./apps/web
+    container_name: volunteer-web
+    depends_on:
+      - gateway
+    ports:
+      - "8080:80"
