@@ -1,6 +1,9 @@
 package com.volunteer.activity;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +12,7 @@ import java.util.Objects;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -125,7 +129,12 @@ class ActivityModuleController {
                     cover_image AS coverImage
                 FROM platform_activities
                 """ + where + """
-                ORDER BY start_at
+                ORDER BY (
+                    0.6 * GREATEST(0, 1 - TIMESTAMPDIFF(HOUR, NOW(), start_at) / 72.0)
+                  + 0.4 * CASE WHEN capacity_count > 0
+                               THEN (capacity_count - enrolled_count) / capacity_count
+                               ELSE 0 END
+                ) DESC, start_at ASC
                 LIMIT :limit OFFSET :offset
                 """), params)
                 .param("limit", safePageSize)
@@ -457,6 +466,21 @@ class ActivityModuleController {
         return activity(activityId);
     }
 
+    @DeleteMapping("/{activityId}")
+    ActivityDeleteResult deleteActivity(@PathVariable Long activityId) {
+        Long existing = jdbcClient.sql("""
+                SELECT COUNT(*) FROM platform_activities WHERE id = :id
+                """).param("id", activityId).query(Long.class).single();
+        if (existing == null || existing == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "activity not found");
+        }
+        jdbcClient.sql("""
+                UPDATE platform_activities SET status_code = 'CLOSED', updated_at = NOW()
+                WHERE id = :id
+                """).param("id", activityId).update();
+        return new ActivityDeleteResult(activityId, "CLOSED", "活动已被管理员关闭");
+    }
+
     @PostMapping("/{activityId}/occupancy/increase")
     ActivityOccupancy increaseOccupancy(@PathVariable Long activityId) {
         int updated = jdbcClient.sql("""
@@ -610,10 +634,19 @@ class ActivityModuleController {
     }
 
     private LocalDateTime parseDateTime(String value, String message) {
+        String trimmed = requiredText(value, message);
+        // Support both "2026-04-05T10:00" (no seconds) and "2026-04-05T10:00:00"
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .appendPattern("yyyy-MM-dd'T'HH:mm")
+                .optionalStart()
+                .appendPattern(":ss")
+                .optionalEnd()
+                .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+                .toFormatter();
         try {
-            return LocalDateTime.parse(requiredText(value, message));
+            return LocalDateTime.parse(trimmed, formatter);
         } catch (Exception exception) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message + ": " + trimmed);
         }
     }
 
@@ -904,4 +937,10 @@ record ActivityOccupancy(
         Long activityId,
         Integer enrolled,
         Integer capacity) {
+}
+
+record ActivityDeleteResult(
+        Long activityId,
+        String status,
+        String message) {
 }

@@ -566,28 +566,45 @@ function initAdminLoginPage() {
 }
 
 function initRegisterPage() {
-  const proofField = qs("#register-proof-field");
-  const proofInput = qs('textarea[name="verificationMaterials"]');
+  // --- 角色切换：显示/隐藏对应的独立表单 ---
+  const roleSwitchContainer = qs("#register-role-switch");
+  const roleHint = qs("#register-role-hint");
+  const volunteerForm = qs("#register-form-volunteer");
+  const organizationForm = qs("#register-form-organization");
 
-  bindRoleSwitch("#register-role-switch", "#register-role", (role) => {
-    if (!proofField || !proofInput) {
-      return;
-    }
+  const ROLE_HINTS = {
+    volunteer: "加入平台，参与志愿服务活动。",
+    organization: "组织者账号需管理员审核通过后方可发布活动。",
+  };
+
+  function activateRole(role) {
+    if (!volunteerForm || !organizationForm) return;
     const isOrg = role === "organization";
-    proofField.hidden = !isOrg;
-    proofInput.required = isOrg;
-  });
-
-  const registerForm = qs("#register-form");
-  if (!registerForm) {
-    return;
+    volunteerForm.hidden = isOrg;
+    organizationForm.hidden = !isOrg;
+    if (roleHint) roleHint.textContent = ROLE_HINTS[role] || "";
+    qsa("[data-role]", roleSwitchContainer || document).forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.role === role);
+    });
   }
 
-  registerForm.addEventListener("submit", async (event) => {
+  if (roleSwitchContainer) {
+    qsa("[data-role]", roleSwitchContainer).forEach((btn) => {
+      btn.addEventListener("click", () => activateRole(btn.dataset.role));
+    });
+  }
+  // 默认激活志愿者
+  activateRole("volunteer");
+
+  // --- 公共提交逻辑（志愿者 & 组织者表单共用）---
+  async function handleRegisterSubmit(event) {
     event.preventDefault();
     hideFeedback("#register-feedback");
-    const formData = new FormData(event.currentTarget);
-    const submitButton = qs('button[type="submit"]', registerForm);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const submitButton = qs('button[type="submit"]', form);
+    const originalText = submitButton ? submitButton.textContent : "";
+
     if (submitButton) {
       submitButton.disabled = true;
       submitButton.textContent = "提交中...";
@@ -607,9 +624,9 @@ function initRegisterPage() {
           community: formData.get("community"),
           bio: formData.get("bio"),
           age,
-          gender: formData.get("gender"),
-          contactPhone: formData.get("contactPhone"),
-          verificationMaterials: formData.get("verificationMaterials"),
+          gender: formData.get("gender") || null,
+          contactPhone: formData.get("contactPhone") || null,
+          verificationMaterials: formData.get("verificationMaterials") || null,
         },
       });
 
@@ -618,15 +635,18 @@ function initRegisterPage() {
       const mobile = encodeURIComponent(String(formData.get("mobile") || ""));
       window.setTimeout(() => {
         window.location.href = `/login.html?from=register&mobile=${mobile}`;
-      }, 700);
+      }, 800);
     } catch (error) {
       showFeedback("#register-feedback", error.message, "error");
       if (submitButton) {
         submitButton.disabled = false;
-        submitButton.textContent = "提交注册";
+        submitButton.textContent = originalText;
       }
     }
-  });
+  }
+
+  if (volunteerForm) volunteerForm.addEventListener("submit", handleRegisterSubmit);
+  if (organizationForm) organizationForm.addEventListener("submit", handleRegisterSubmit);
 }
 function buildActivityAction(item, session) {
   const detailLink = `<a class="button button-light button-small" href="${activityDetailUrl(item.id)}">详情</a>`;
@@ -1054,89 +1074,126 @@ async function initAdminDashboardPage() {
 
   const orgRoot = qs("#admin-org-list");
   const proposalRoot = qs("#admin-proposal-list");
-  if (!orgRoot || !proposalRoot) {
-    return;
+  const activityRoot = qs("#admin-activity-list");
+  const userRoot = qs("#admin-user-list");
+  const userRoleFilter = qs("#admin-user-role-filter");
+  const noticeForm = qs("#admin-notice-form");
+  const noticesListRoot = qs("#admin-notices-list");
+
+  // ---- 组织者审核 & 活动申请审核 ----
+  async function loadReviews() {
+    if (orgRoot) {
+      const orgs = await apiFetch("/admin/reviews/organizations?status=PENDING_REVIEW");
+      renderList(
+        orgRoot,
+        orgs || [],
+        (item) => `
+          <div class="item-main">
+            <h3>${item.name}</h3>
+            <p>${item.community} · ${item.mobile}</p>
+            <p class="item-meta">${item.verificationMaterials || "未提供资质说明"}</p>
+          </div>
+          <div class="item-side item-side-wide">
+            <span class="item-meta">${item.submittedAt}</span>
+            <div class="toolbar-actions">
+              <button class="button button-primary button-small" type="button" data-org-review="${item.id}" data-approved="true">通过</button>
+              <button class="button button-light button-small" type="button" data-org-review="${item.id}" data-approved="false">驳回</button>
+            </div>
+          </div>
+        `,
+        "暂无待审核组织者",
+      );
+
+      qsa("[data-org-review]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const userId = Number(button.dataset.orgReview);
+          const approved = button.dataset.approved === "true";
+          button.disabled = true;
+          try {
+            await apiFetch(`/admin/reviews/organizations/${userId}`, {
+              method: "POST",
+              body: { approved, reviewNote: approved ? "资质审核通过" : "资质审核未通过" },
+            });
+            await loadReviews();
+          } catch (error) {
+            button.disabled = false;
+            window.alert(error.message);
+          }
+        });
+      });
+    }
+
+    if (proposalRoot) {
+      const proposals = await apiFetch("/admin/reviews/proposals?status=REVIEWING");
+      renderList(
+        proposalRoot,
+        proposals || [],
+        (item) => `
+          <div class="item-main">
+            <h3>${item.title}</h3>
+            <p>${item.organizationName} · ${item.category} · ${item.location}</p>
+            <p class="item-meta">${item.startAt} → ${item.endAt}</p>
+          </div>
+          <div class="item-side item-side-wide">
+            <span class="item-meta">${item.submittedAt}</span>
+            <div class="toolbar-actions">
+              <button class="button button-primary button-small" type="button" data-proposal-review="${item.id}" data-approved="true">发布</button>
+              <button class="button button-light button-small" type="button" data-proposal-review="${item.id}" data-approved="false">驳回</button>
+            </div>
+          </div>
+        `,
+        "暂无待审核活动申请",
+      );
+
+      qsa("[data-proposal-review]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const proposalId = Number(button.dataset.proposalReview);
+          const approved = button.dataset.approved === "true";
+          button.disabled = true;
+          try {
+            await apiFetch(`/admin/reviews/proposals/${proposalId}`, {
+              method: "POST",
+              body: { approved, reviewNote: approved ? "活动申请审核通过并发布" : "活动申请审核未通过" },
+            });
+            await loadReviews();
+          } catch (error) {
+            button.disabled = false;
+            window.alert(error.message);
+          }
+        });
+      });
+    }
   }
 
-  async function loadAll() {
-    const orgs = await apiFetch("/admin/reviews/organizations?status=PENDING_REVIEW");
-    const proposals = await apiFetch("/admin/reviews/proposals?status=REVIEWING");
-
+  // ---- 活动管理（关闭不合规活动）----
+  async function loadActivities() {
+    if (!activityRoot) return;
+    const data = await apiFetch("/activities?page=1&pageSize=20");
+    const items = data?.items || [];
     renderList(
-      orgRoot,
-      orgs || [],
-      (item) => `
-        <div class="item-main">
-          <h3>${item.name}</h3>
-          <p>${item.community} · ${item.mobile}</p>
-          <p>${item.verificationMaterials || "未提供资质说明"}</p>
-        </div>
-        <div class="item-side item-side-wide">
-          <span class="item-meta">${item.submittedAt}</span>
-          <div class="toolbar-actions">
-            <button class="button button-primary button-small" type="button" data-org-review="${item.id}" data-approved="true">通过</button>
-            <button class="button button-light button-small" type="button" data-org-review="${item.id}" data-approved="false">驳回</button>
-          </div>
-        </div>
-      `,
-      "暂无待审核组织者",
-    );
-
-    qsa("[data-org-review]").forEach((button) => {
-      button.addEventListener("click", async () => {
-        const userId = Number(button.dataset.orgReview);
-        const approved = button.dataset.approved === "true";
-        button.disabled = true;
-        try {
-          await apiFetch(`/admin/reviews/organizations/${userId}`, {
-            method: "POST",
-            body: {
-              approved,
-              reviewNote: approved ? "资质审核通过" : "资质审核未通过",
-            },
-          });
-          await loadAll();
-        } catch (error) {
-          button.disabled = false;
-          window.alert(error.message);
-        }
-      });
-    });
-
-    renderList(
-      proposalRoot,
-      proposals || [],
+      activityRoot,
+      items,
       (item) => `
         <div class="item-main">
           <h3>${item.title}</h3>
-          <p>${item.organizationName} · ${item.category} · ${item.location}</p>
-          <p>${item.startAt} - ${item.endAt}</p>
+          <p>${item.category} · ${item.location} · ${item.schedule}</p>
+          <p class="item-meta">已报名 ${item.enrolled ?? 0}/${item.capacity ?? 0} 人 · 状态：${activityStatusLabel(item.status)}</p>
         </div>
-        <div class="item-side item-side-wide">
-          <span class="item-meta">${item.submittedAt}</span>
-          <div class="toolbar-actions">
-            <button class="button button-primary button-small" type="button" data-proposal-review="${item.id}" data-approved="true">发布</button>
-            <button class="button button-light button-small" type="button" data-proposal-review="${item.id}" data-approved="false">驳回</button>
-          </div>
+        <div class="item-side">
+          <a class="button button-light button-small" href="${activityDetailUrl(item.id)}">详情</a>
+          ${item.status !== "CLOSED" ? `<button class="button button-warn button-small" type="button" data-delete-activity="${item.id}">关闭活动</button>` : '<span class="chip chip-warn">已关闭</span>'}
         </div>
       `,
-      "暂无待审核活动申请",
+      "暂无活动",
     );
 
-    qsa("[data-proposal-review]").forEach((button) => {
+    qsa("[data-delete-activity]").forEach((button) => {
       button.addEventListener("click", async () => {
-        const proposalId = Number(button.dataset.proposalReview);
-        const approved = button.dataset.approved === "true";
+        if (!window.confirm("确定要关闭该活动吗？此操作将立即叫停报名。")) return;
         button.disabled = true;
         try {
-          await apiFetch(`/admin/reviews/proposals/${proposalId}`, {
-            method: "POST",
-            body: {
-              approved,
-              reviewNote: approved ? "活动申请审核通过并发布" : "活动申请审核未通过",
-            },
-          });
-          await loadAll();
+          await apiFetch(`/admin/activities/${button.dataset.deleteActivity}`, { method: "DELETE" });
+          await loadActivities();
         } catch (error) {
           button.disabled = false;
           window.alert(error.message);
@@ -1145,7 +1202,99 @@ async function initAdminDashboardPage() {
     });
   }
 
-  await loadAll();
+  // ---- 用户管理（删除用户）----
+  async function loadUsers(role = "") {
+    if (!userRoot) return;
+    const params = new URLSearchParams({ limit: "50" });
+    if (role) params.set("role", role);
+    const users = await apiFetch(`/admin/users?${params.toString()}`);
+    renderList(
+      userRoot,
+      users || [],
+      (item) => `
+        <div class="item-main">
+          <h3>${item.name} <span class="item-meta">${item.mobile}</span></h3>
+          <p>${roleLabel(item.role)} · ${item.community} · 注册于 ${item.createdAt}</p>
+          <p class="item-meta">状态：${item.status}</p>
+        </div>
+        <div class="item-side">
+          <button class="button button-warn button-small" type="button" data-delete-user="${item.id}" data-user-name="${item.name}">删除账号</button>
+        </div>
+      `,
+      "暂无用户",
+    );
+
+    qsa("[data-delete-user]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const name = button.dataset.userName;
+        if (!window.confirm(`确定要删除用户「${name}」吗？此操作不可撤销。`)) return;
+        button.disabled = true;
+        try {
+          await apiFetch(`/admin/users/${button.dataset.deleteUser}`, { method: "DELETE" });
+          await loadUsers(userRoleFilter ? userRoleFilter.value : "");
+        } catch (error) {
+          button.disabled = false;
+          window.alert(error.message);
+        }
+      });
+    });
+  }
+
+  if (userRoleFilter) {
+    userRoleFilter.addEventListener("change", () => loadUsers(userRoleFilter.value));
+  }
+
+  // ---- 发布平台公告 ----
+  async function loadNotices() {
+    if (!noticesListRoot) return;
+    const notices = await apiFetch("/admin/notices?limit=20");
+    renderList(
+      noticesListRoot,
+      notices || [],
+      (item) => `
+        <div class="item-main">
+          <h3>${item.title} <span class="chip">${item.level}</span></h3>
+          <p>${item.content}</p>
+        </div>
+        <div class="item-side">
+          <span class="item-meta">${item.publishedAt}</span>
+          <span class="chip">${item.audience}</span>
+        </div>
+      `,
+      "暂无公告",
+    );
+  }
+
+  if (noticeForm) {
+    noticeForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      hideFeedback("#admin-notice-feedback");
+      const formData = new FormData(event.currentTarget);
+      const submitBtn = qs('button[type="submit"]', noticeForm);
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "发布中..."; }
+
+      try {
+        await apiFetch("/admin/notices", {
+          method: "POST",
+          body: {
+            title: formData.get("title"),
+            content: formData.get("content"),
+            audience: formData.get("audience"),
+            level: formData.get("level"),
+          },
+        });
+        showFeedback("#admin-notice-feedback", "公告已发布，所有用户可见", "success");
+        noticeForm.reset();
+        await loadNotices();
+      } catch (error) {
+        showFeedback("#admin-notice-feedback", error.message, "error");
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "发布公告"; }
+      }
+    });
+  }
+
+  await Promise.all([loadReviews(), loadActivities(), loadUsers(), loadNotices()]);
 }
 
 async function initPublishPage() {

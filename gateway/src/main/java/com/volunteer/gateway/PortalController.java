@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -372,6 +373,63 @@ class PortalController {
                 ProposalReviewResult.class);
     }
 
+    @DeleteMapping("/api/admin/activities/{activityId}")
+    ActivityDeleteResult deleteActivity(
+            @RequestHeader(value = SESSION_HEADER, required = false) String token,
+            @PathVariable Long activityId) {
+        SessionUser user = requireSession(token);
+        requireAdmin(user);
+        return delete(activityBaseUrl + "/internal/activities/" + activityId, ActivityDeleteResult.class);
+    }
+
+    @PostMapping("/api/admin/notices")
+    NoticeCreateResult publishNotice(
+            @RequestHeader(value = SESSION_HEADER, required = false) String token,
+            @RequestBody NoticeCreateForm form) {
+        SessionUser user = requireSession(token);
+        requireAdmin(user);
+        return post(communityBaseUrl + "/internal/community/notices",
+                new NoticeCreateRequest(form.title(), form.content(), form.audience(), form.level()),
+                NoticeCreateResult.class);
+    }
+
+    @GetMapping("/api/admin/notices")
+    List<NoticeItem> allNotices(
+            @RequestHeader(value = SESSION_HEADER, required = false) String token,
+            @RequestParam(defaultValue = "50") Integer limit) {
+        SessionUser user = requireSession(token);
+        requireAdmin(user);
+        String url = UriComponentsBuilder
+                .fromHttpUrl(communityBaseUrl + "/internal/community/notices/all")
+                .queryParam("limit", limit)
+                .toUriString();
+        return get(url, NoticeListResponse.class).notices();
+    }
+
+    @GetMapping("/api/admin/users")
+    List<UserListItem> adminUserList(
+            @RequestHeader(value = SESSION_HEADER, required = false) String token,
+            @RequestParam(required = false) String role,
+            @RequestParam(defaultValue = "50") Integer limit) {
+        SessionUser user = requireSession(token);
+        requireAdmin(user);
+        String url = UriComponentsBuilder
+                .fromHttpUrl(userBaseUrl + "/internal/users/admin/list")
+                .queryParamIfPresent("role", optionalValue(role))
+                .queryParam("limit", limit)
+                .toUriString();
+        return get(url, UserListResponse.class).items();
+    }
+
+    @DeleteMapping("/api/admin/users/{userId}")
+    UserDeleteResult deleteUser(
+            @RequestHeader(value = SESSION_HEADER, required = false) String token,
+            @PathVariable Long userId) {
+        SessionUser user = requireSession(token);
+        requireAdmin(user);
+        return delete(userBaseUrl + "/internal/users/" + userId, UserDeleteResult.class);
+    }
+
     @GetMapping("/api/dashboard")
     DashboardResponse dashboard(@RequestHeader(value = SESSION_HEADER, required = false) String token) {
         SessionUser user = requireSession(token);
@@ -581,6 +639,14 @@ class PortalController {
     private <T> T postWithoutBody(String url, Class<T> responseType) {
         try {
             return restClient.post().uri(url).retrieve().body(responseType);
+        } catch (RestClientResponseException exception) {
+            throw toGatewayException(exception);
+        }
+    }
+
+    private <T> T delete(String url, Class<T> responseType) {
+        try {
+            return restClient.delete().uri(url).retrieve().body(responseType);
         } catch (RestClientResponseException exception) {
             throw toGatewayException(exception);
         }
@@ -989,6 +1055,47 @@ record ProposalReviewResult(
         String status,
         String reviewNote,
         Long publishedActivityId) {
+}
+
+record ActivityDeleteResult(
+        Long activityId,
+        String status,
+        String message) {
+}
+
+record NoticeCreateForm(
+        String title,
+        String content,
+        String audience,
+        String level) {
+}
+
+record NoticeCreateRequest(
+        String title,
+        String content,
+        String audience,
+        String level) {
+}
+
+record NoticeCreateResult(
+        Long noticeId,
+        String status) {
+}
+
+record UserListItem(
+        Long id,
+        String name,
+        String mobile,
+        String role,
+        String community,
+        String status,
+        String createdAt) {
+}
+
+record UserListResponse(List<UserListItem> items) {
+}
+
+record UserDeleteResult(Long userId, String status) {
 }
 
 record VolunteerOverview(

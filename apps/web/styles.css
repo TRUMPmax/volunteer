@@ -191,6 +191,22 @@ p {
   color: var(--ink-soft);
 }
 
+.button-warn {
+  background: #fff0f0;
+  border-color: #f5c6c6;
+  color: #c0392b;
+}
+
+.button-warn:hover:not(:disabled) {
+  background: #fde8e8;
+  border-color: #e08080;
+}
+
+.button-warn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .button-small {
   min-height: 34px;
   padding: 0 12px;

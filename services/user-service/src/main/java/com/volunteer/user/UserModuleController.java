@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -377,6 +378,52 @@ class UserModuleController {
         return new OrganizationReviewResult(organizationUserId, nextStatus, note);
     }
 
+    @GetMapping("/admin/list")
+    UserListResponse userList(
+            @RequestParam(required = false) String role,
+            @RequestParam(defaultValue = "50") Integer limit) {
+        int safeLimit = Math.max(Math.min(limit, 200), 1);
+        StringBuilder where = new StringBuilder(" WHERE role_code <> 'admin' ");
+        java.util.Map<String, Object> params = new java.util.LinkedHashMap<>();
+        params.put("limit", safeLimit);
+
+        if (role != null && !role.trim().isEmpty()) {
+            where.append(" AND role_code = :role ");
+            params.put("role", role.trim());
+        }
+
+        List<UserListItem> items = applyParams(jdbcClient.sql("""
+                SELECT
+                    id,
+                    name,
+                    mobile,
+                    role_code AS role,
+                    community_name AS community,
+                    status_code AS status,
+                    COALESCE(DATE_FORMAT(created_at, '%Y-%m-%d %H:%i'), '-') AS createdAt
+                FROM platform_users
+                """ + where + """
+                ORDER BY created_at DESC
+                LIMIT :limit
+                """), params).query(UserListItem.class).list();
+        return new UserListResponse(items);
+    }
+
+    @DeleteMapping("/{userId}")
+    UserDeleteResult deleteUser(@PathVariable Long userId) {
+        PlatformUserEntity user = loadUserById(userId);
+        if ("admin".equals(user.role())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "cannot delete admin account");
+        }
+        jdbcClient.sql("""
+                DELETE FROM user_sessions WHERE user_id = :userId
+                """).param("userId", userId).update();
+        jdbcClient.sql("""
+                DELETE FROM platform_users WHERE id = :userId
+                """).param("userId", userId).update();
+        return new UserDeleteResult(userId, "DELETED");
+    }
+
     private PlatformUserEntity loadUserById(Long userId) {
         return jdbcClient.sql("""
                 SELECT
@@ -598,6 +645,22 @@ record OrganizationReviewResult(
         Long organizationUserId,
         String status,
         String reviewNote) {
+}
+
+record UserListItem(
+        Long id,
+        String name,
+        String mobile,
+        String role,
+        String community,
+        String status,
+        String createdAt) {
+}
+
+record UserListResponse(List<UserListItem> items) {
+}
+
+record UserDeleteResult(Long userId, String status) {
 }
 
 record PlatformUserEntity(

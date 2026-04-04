@@ -29,27 +29,30 @@
               <button class="role-switch-button is-active" type="button" data-role="volunteer">志愿者</button>
               <button class="role-switch-button" type="button" data-role="organization">组织者</button>
             </div>
-            <p class="item-meta">组织者账号需要管理员审核通过后才能发布活动。</p>
+            <p class="item-meta" id="register-role-hint">加入平台，参与志愿服务活动。</p>
           </div>
 
           <div class="auth-card">
-            <form id="register-form" class="form-grid form-grid-wide" method="post">
-              <input id="register-role" type="hidden" name="role" value="volunteer" />
+
+            <!-- ===== 志愿者注册表单 ===== -->
+            <form id="register-form-volunteer" class="form-grid form-grid-wide" method="post" data-register-form="volunteer">
+              <input type="hidden" name="role" value="volunteer" />
+
               <label class="field">
                 <span>姓名</span>
-                <input name="name" type="text" required />
+                <input name="name" type="text" required placeholder="真实姓名" />
               </label>
               <label class="field">
                 <span>手机号</span>
-                <input name="mobile" type="tel" required />
+                <input name="mobile" type="tel" required placeholder="用于登录" />
               </label>
               <label class="field">
                 <span>密码</span>
-                <input name="password" type="password" required />
+                <input name="password" type="password" required placeholder="至少 6 位" />
               </label>
               <label class="field">
-                <span>所属社区/机构</span>
-                <input name="community" type="text" required />
+                <span>所属社区</span>
+                <input name="community" type="text" required placeholder="所在街道或社区" />
               </label>
               <label class="field">
                 <span>年龄</span>
@@ -66,30 +69,66 @@
               </label>
               <label class="field field-span">
                 <span>联系方式</span>
-                <input name="contactPhone" type="text" placeholder="手机号、微信、邮箱等" />
+                <input name="contactPhone" type="text" placeholder="手机号、微信、邮箱等（可稍后完善）" />
               </label>
+              <label class="field field-span">
+                <span>个人简介</span>
+                <textarea name="bio" rows="3" placeholder="简单介绍自己的志愿服务经历或意向（可稍后完善）"></textarea>
+              </label>
+              <button class="button button-primary button-block field-span" type="submit">注册为志愿者</button>
+            </form>
 
-              <label class="field field-span" id="register-proof-field" hidden>
-                <span>组织者资质材料</span>
+            <!-- ===== 组织者注册表单 ===== -->
+            <form id="register-form-organization" class="form-grid form-grid-wide" method="post" data-register-form="organization" hidden>
+              <input type="hidden" name="role" value="organization" />
+
+              <label class="field">
+                <span>机构/组织名称</span>
+                <input name="name" type="text" required placeholder="机构或组织的全称" />
+              </label>
+              <label class="field">
+                <span>联系手机号</span>
+                <input name="mobile" type="tel" required placeholder="用于登录与联系" />
+              </label>
+              <label class="field">
+                <span>登录密码</span>
+                <input name="password" type="password" required placeholder="至少 6 位" />
+              </label>
+              <label class="field">
+                <span>所属社区/机构地址</span>
+                <input name="community" type="text" required placeholder="街道、社区或机构所在地" />
+              </label>
+              <label class="field">
+                <span>负责人姓名</span>
+                <input name="contactPerson" type="text" placeholder="主要负责人（可稍后完善）" />
+              </label>
+              <label class="field">
+                <span>对外联系方式</span>
+                <input name="contactPhone" type="text" placeholder="公开电话、邮箱、微信等" />
+              </label>
+              <label class="field field-span">
+                <span>组织者资质材料 <span class="item-meta">（必填，供管理员审核）</span></span>
                 <textarea
                   name="verificationMaterials"
-                  rows="4"
-                  placeholder="请填写机构资质、负责人信息、运营证明等"
+                  rows="5"
+                  required
+                  placeholder="请填写：机构统一社会信用代码、业务范围、负责人身份证号、运营证明材料链接等信息，管理员审核通过后方可发布活动。"
                 ></textarea>
               </label>
-
               <label class="field field-span">
-                <span>简介</span>
-                <textarea name="bio" rows="4"></textarea>
+                <span>机构简介</span>
+                <textarea name="bio" rows="3" placeholder="简要介绍机构背景、主要业务或服务范围（可稍后完善）"></textarea>
               </label>
-              <button class="button button-primary button-block field-span" type="submit">提交注册</button>
+              <p class="item-meta field-span">* 组织者账号需管理员审核通过后方可发布活动，请确保资质材料真实完整。</p>
+              <button class="button button-primary button-block field-span" type="submit">提交注册申请</button>
             </form>
+
             <div id="register-feedback" class="feedback" hidden></div>
           </div>
         </section>
       </main>
     </div>
 
-    <script src="/app.js?v=20260404_6"></script>
+    <script src="/app.js?v=20260404_8"></script>
   </body>
 </html>
