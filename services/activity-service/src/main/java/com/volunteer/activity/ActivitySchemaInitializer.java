@@ -15,6 +15,10 @@ class ActivitySchemaInitializer {
 
     @PostConstruct
     void initialize() {
+        // 删除旧表以同步最新schema
+        jdbcClient.sql("DROP TABLE IF EXISTS activity_proposals").update();
+        jdbcClient.sql("DROP TABLE IF EXISTS platform_activities").update();
+
         jdbcClient.sql("""
                 CREATE TABLE IF NOT EXISTS activity_proposals (
                     id BIGINT PRIMARY KEY,

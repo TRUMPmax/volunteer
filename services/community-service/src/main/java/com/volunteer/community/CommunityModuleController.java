@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -95,6 +97,16 @@ class CommunityModuleController {
                 .update();
 
         return new NoticeCreateResult(nextId, "PUBLISHED");
+    }
+
+    @DeleteMapping("/notices/{id}")
+    void deleteNotice(@PathVariable Long id) {
+        int deleted = jdbcClient.sql("DELETE FROM platform_notices WHERE id = :id")
+                .param("id", id)
+                .update();
+        if (deleted == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "公告不存在");
+        }
     }
 
     private List<NoticeItem> latestNotices(String role, int limit) {

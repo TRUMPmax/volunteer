@@ -28,7 +28,7 @@ class VolunteerModuleController {
         return jdbcClient.sql("""
                 SELECT
                     COUNT(*) AS totalEnrollments,
-                    SUM(CASE WHEN status_code = 'COMPLETED' THEN 1 ELSE 0 END) AS completedServices,
+                    COALESCE(SUM(CASE WHEN status_code = 'COMPLETED' THEN 1 ELSE 0 END), 0) AS completedServices,
                     COALESCE(SUM(service_hours), 0) AS totalServiceHours,
                     COALESCE(SUM(points_earned), 0) AS totalPoints
                 FROM volunteer_enrollments
@@ -218,7 +218,7 @@ class VolunteerModuleController {
         VolunteerUserSummary summary = jdbcClient.sql("""
                 SELECT
                     COUNT(*) AS totalEnrollments,
-                    SUM(CASE WHEN status_code = 'COMPLETED' THEN 1 ELSE 0 END) AS completedServices,
+                    COALESCE(SUM(CASE WHEN status_code = 'COMPLETED' THEN 1 ELSE 0 END), 0) AS completedServices,
                     COALESCE(SUM(points_earned), 0) AS totalPoints,
                     COALESCE(SUM(service_hours), 0) AS totalServiceHours
                 FROM volunteer_enrollments

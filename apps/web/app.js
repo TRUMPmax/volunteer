@@ -93,7 +93,8 @@ async function apiFetch(path, options = {}) {
     return null;
   }
 
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 }
 
 async function validateSession() {
@@ -465,9 +466,39 @@ async function initHomePage() {
     "暂无活动",
   );
 
+  // 首页公告分页
+  window.homeNoticesPage = 1;
+  window.homeNoticesPerPage = 5;
+  window.allHomeNotices = data.notices || [];
+
+  renderHomeNotices();
+}
+
+async function loadHomeNotices(page = 1) {
+  try {
+    const data = await apiFetch("/home");
+    window.allHomeNotices = data.notices || [];
+    window.homeNoticesPage = page;
+    renderHomeNotices();
+  } catch (error) {
+    console.error('加载公告失败:', error);
+  }
+}
+
+function renderHomeNotices() {
+  if (!window.allHomeNotices || window.allHomeNotices.length === 0) {
+    qs("#home-notices").innerHTML = '<div class="empty-state">暂无通知</div>';
+    qs("#home-notices-pagination").innerHTML = '';
+    return;
+  }
+
+  const start = (window.homeNoticesPage - 1) * window.homeNoticesPerPage;
+  const end = start + window.homeNoticesPerPage;
+  const pageNotices = window.allHomeNotices.slice(start, end);
+
   renderList(
     qs("#home-notices"),
-    data.notices || [],
+    pageNotices,
     (item) => `
       <div class="item-main">
         <h3>${item.title}</h3>
@@ -479,6 +510,14 @@ async function initHomePage() {
       </div>
     `,
     "暂无通知",
+  );
+
+  renderPagination(
+    qs("#home-notices-pagination"),
+    window.homeNoticesPage,
+    window.homeNoticesPerPage,
+    window.allHomeNotices.length,
+    loadHomeNotices
   );
 }
 
@@ -1245,12 +1284,29 @@ async function initAdminDashboardPage() {
   }
 
   // ---- 发布平台公告 ----
-  async function loadNotices() {
+  let currentNoticePage = 1;
+  const noticesPerPage = 20;
+  let allNotices = [];
+
+  async function loadNotices(page = 1) {
     if (!noticesListRoot) return;
-    const notices = await apiFetch("/admin/notices?limit=20");
+    currentNoticePage = page;
+
+    const notices = await apiFetch(`/admin/notices?limit=${noticesPerPage}`);
+    allNotices = notices || [];
+    renderNotices();
+  }
+
+  function renderNotices() {
+    if (!noticesListRoot) return;
+
+    const start = (currentNoticePage - 1) * noticesPerPage;
+    const end = start + noticesPerPage;
+    const pageNotices = allNotices.slice(start, end);
+
     renderList(
       noticesListRoot,
-      notices || [],
+      pageNotices,
       (item) => `
         <div class="item-main">
           <h3>${item.title} <span class="chip">${item.level}</span></h3>
@@ -1259,10 +1315,31 @@ async function initAdminDashboardPage() {
         <div class="item-side">
           <span class="item-meta">${item.publishedAt}</span>
           <span class="chip">${item.audience}</span>
+          <button class="button button-warn" data-notice-id="${item.id}">删除</button>
         </div>
       `,
       "暂无公告",
     );
+
+    renderPagination("admin-notices-pagination", currentNoticePage, noticesPerPage, allNotices.length, loadNotices);
+    attachDeleteNoticeButtons();
+  }
+
+  function attachDeleteNoticeButtons() {
+    const deleteButtons = noticesListRoot.querySelectorAll('[data-notice-id]');
+    deleteButtons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const noticeId = btn.getAttribute('data-notice-id');
+        if (!confirm('确定要删除这条公告吗？')) return;
+
+        try {
+          await apiFetch(`/admin/notices/${noticeId}`, { method: 'DELETE' });
+          await loadNotices(currentNoticePage);
+        } catch (error) {
+          alert('删除失败：' + error.message);
+        }
+      });
+    });
   }
 
   if (noticeForm) {
@@ -1285,7 +1362,7 @@ async function initAdminDashboardPage() {
         });
         showFeedback("#admin-notice-feedback", "公告已发布，所有用户可见", "success");
         noticeForm.reset();
-        await loadNotices();
+        await loadNotices(1);
       } catch (error) {
         showFeedback("#admin-notice-feedback", error.message, "error");
       } finally {
@@ -1621,7 +1698,18 @@ async function bootstrap() {
     console.error(error);
     const pageRoot = qs(".page");
     if (pageRoot) {
-      pageRoot.appendChild(createEmptyState(error.message));
+      const raw = error.message || "";
+      let friendlyMessage = "页面加载失败，请刷新重试";
+      if (raw.includes("401") || raw.toLowerCase().includes("unauthorized") || raw.includes("please login")) {
+        friendlyMessage = "登录已过期，请重新登录";
+      } else if (raw.includes("403") || raw.toLowerCase().includes("forbidden")) {
+        friendlyMessage = "您没有权限访问此页面";
+      } else if (raw.includes("503") || raw.includes("不可用") || raw.includes("unavailable")) {
+        friendlyMessage = "服务暂时不可用，请稍后重试";
+      } else if (raw.includes("404") || raw.toLowerCase().includes("not found")) {
+        friendlyMessage = "请求的内容不存在";
+      }
+      pageRoot.appendChild(createEmptyState(friendlyMessage));
     }
   }
 }

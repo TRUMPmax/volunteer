@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -69,10 +70,10 @@ class PortalController {
 
         return new HomeResponse(
                 List.of(
-                        new StatItem("注册志愿者", userOverview.volunteerUsers(), "当前活跃志愿者规模"),
-                        new StatItem("合作组织", userOverview.organizationUsers(), "可发起活动主体"),
-                        new StatItem("开放活动", activityOverview.openActivities(), "当前可报名"),
-                        new StatItem("累计报名", activityOverview.enrolledCount(), "平台累计报名量")),
+                        new StatItem("注册志愿者", userOverview.volunteerUsers(), "与你同行"),
+                        new StatItem("合作组织", userOverview.organizationUsers(), "公益主体"),
+                        new StatItem("开放活动", activityOverview.openActivities(), "立即可报名"),
+                        new StatItem("累计报名", activityOverview.enrolledCount(), "参与总次数")),
                 activityOverview.featuredActivities(),
                 noticeList.notices());
     }
@@ -388,9 +389,16 @@ class PortalController {
             @RequestBody NoticeCreateForm form) {
         SessionUser user = requireSession(token);
         requireAdmin(user);
-        return post(communityBaseUrl + "/internal/community/notices",
-                new NoticeCreateRequest(form.title(), form.content(), form.audience(), form.level()),
-                NoticeCreateResult.class);
+        return post(communityBaseUrl + "/internal/community/notices", form, NoticeCreateResult.class);
+    }
+
+    @DeleteMapping("/api/admin/notices/{id}")
+    void deleteNotice(
+            @RequestHeader(value = SESSION_HEADER, required = false) String token,
+            @PathVariable Long id) {
+        SessionUser user = requireSession(token);
+        requireAdmin(user);
+        delete(communityBaseUrl + "/internal/community/notices/" + id, Void.class);
     }
 
     @GetMapping("/api/admin/notices")
@@ -455,10 +463,10 @@ class PortalController {
                     user,
                     profile,
                     List.of(
-                            new StatItem("我发布的活动", managedCount, "组织方活动规模"),
-                            new StatItem("审核中的申请", proposalCount, "等待平台处理"),
-                            new StatItem("活动总名额", totalCapacity, "已发布活动容量"),
-                            new StatItem("已报名人数", enrolledCount, "当前活动参与规模")),
+                            new StatItem("我发布的活动", managedCount, "已上线的活动"),
+                            new StatItem("审核中的申请", proposalCount, "等待平台审核"),
+                            new StatItem("活动总名额", totalCapacity, "可接收的志愿者数"),
+                            new StatItem("已报名人数", enrolledCount, "热心参与的志愿者")),
                     List.of(
                             new DashboardSection(
                                     "最新活动",
@@ -501,10 +509,10 @@ class PortalController {
                     user,
                     profile,
                     List.of(
-                            new StatItem("我的报名", volunteerDashboard.summary().totalEnrollments(), "累计报名活动"),
-                            new StatItem("完成服务", volunteerDashboard.summary().completedServices(), "已完成服务记录"),
-                            new StatItem("累计积分", volunteerDashboard.summary().totalPoints(), "当前积分总量"),
-                            new StatItem("服务时长", volunteerDashboard.summary().totalServiceHours(), "累计服务时长")),
+                            new StatItem("我的报名", volunteerDashboard.summary().totalEnrollments(), "已参与的活动次数"),
+                            new StatItem("完成服务", volunteerDashboard.summary().completedServices(), "圆满完成的服务"),
+                            new StatItem("累计积分", volunteerDashboard.summary().totalPoints(), "你的志愿积分"),
+                            new StatItem("服务时长", volunteerDashboard.summary().totalServiceHours(), "累计奉献的时间")),
                     List.of(
                             new DashboardSection(
                                     "近期活动",
@@ -541,10 +549,10 @@ class PortalController {
                 user,
                 profile,
                 List.of(
-                        new StatItem("注册用户", userOverview.totalUsers(), "不含平台管理员"),
-                        new StatItem("开放活动", activityOverview.openActivities(), "当前开放报名"),
-                        new StatItem("累计报名", volunteerOverview.totalEnrollments(), "平台报名总量"),
-                        new StatItem("完成服务", volunteerOverview.completedServices(), "已完成服务记录")),
+                        new StatItem("注册用户", userOverview.totalUsers(), "平台全部用户"),
+                        new StatItem("开放活动", activityOverview.openActivities(), "正在招募志愿者"),
+                        new StatItem("累计报名", volunteerOverview.totalEnrollments(), "平台报名总次数"),
+                        new StatItem("完成服务", volunteerOverview.completedServices(), "志愿服务总记录")),
                 List.of(
                         new DashboardSection("平台概览", "/activities.html", "查看活动", List.of()),
                         new DashboardSection("平台通知", "/dashboard.html", "留在当前页", List.of())),
@@ -617,6 +625,8 @@ class PortalController {
             return restClient.get().uri(url).retrieve().body(responseType);
         } catch (RestClientResponseException exception) {
             throw toGatewayException(exception);
+        } catch (RestClientException exception) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "下游服务暂时不可用，请稍后重试");
         }
     }
 
@@ -625,6 +635,8 @@ class PortalController {
             return restClient.post().uri(url).body(body).retrieve().body(responseType);
         } catch (RestClientResponseException exception) {
             throw toGatewayException(exception);
+        } catch (RestClientException exception) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "下游服务暂时不可用，请稍后重试");
         }
     }
 
@@ -633,6 +645,8 @@ class PortalController {
             return restClient.put().uri(url).body(body).retrieve().body(responseType);
         } catch (RestClientResponseException exception) {
             throw toGatewayException(exception);
+        } catch (RestClientException exception) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "下游服务暂时不可用，请稍后重试");
         }
     }
 
@@ -641,6 +655,8 @@ class PortalController {
             return restClient.post().uri(url).retrieve().body(responseType);
         } catch (RestClientResponseException exception) {
             throw toGatewayException(exception);
+        } catch (RestClientException exception) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "下游服务暂时不可用，请稍后重试");
         }
     }
 
@@ -649,6 +665,8 @@ class PortalController {
             return restClient.delete().uri(url).retrieve().body(responseType);
         } catch (RestClientResponseException exception) {
             throw toGatewayException(exception);
+        } catch (RestClientException exception) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "下游服务暂时不可用，请稍后重试");
         }
     }
 
@@ -1064,13 +1082,6 @@ record ActivityDeleteResult(
 }
 
 record NoticeCreateForm(
-        String title,
-        String content,
-        String audience,
-        String level) {
-}
-
-record NoticeCreateRequest(
         String title,
         String content,
         String audience,

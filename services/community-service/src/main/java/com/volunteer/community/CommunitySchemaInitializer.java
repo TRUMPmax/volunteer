@@ -27,6 +27,9 @@ class CommunitySchemaInitializer {
                 )
                 """).update();
 
+        // Ensure created_at column exists for backward compatibility
+        ensureColumn("created_at", "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP");
+
         Long count = jdbcClient.sql("""
                 SELECT COUNT(*)
                 FROM platform_notices
@@ -41,5 +44,24 @@ class CommunitySchemaInitializer {
                     (3, '报名提醒', 'volunteer', 'NOTICE', '请完善个人资料后再报名活动。', NOW(), NOW())
                     """).update();
         }
+    }
+
+    private void ensureColumn(String columnName, String ddl) {
+        Boolean exists = jdbcClient.sql("""
+                SELECT COUNT(*) > 0
+                FROM information_schema.columns
+                WHERE table_schema = DATABASE()
+                  AND table_name = 'platform_notices'
+                  AND column_name = :columnName
+                """)
+                .param("columnName", columnName)
+                .query(Boolean.class)
+                .single();
+
+        if (Boolean.TRUE.equals(exists)) {
+            return;
+        }
+
+        jdbcClient.sql("ALTER TABLE platform_notices ADD COLUMN " + columnName + " " + ddl).update();
     }
 }
