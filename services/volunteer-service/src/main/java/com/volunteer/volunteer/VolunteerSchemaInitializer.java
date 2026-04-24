@@ -15,6 +15,9 @@ class VolunteerSchemaInitializer {
 
     @PostConstruct
     void initialize() {
+        // Drop and recreate to ensure schema is always up to date
+        jdbcClient.sql("DROP TABLE IF EXISTS volunteer_enrollments").update();
+
         jdbcClient.sql("""
                 CREATE TABLE IF NOT EXISTS volunteer_enrollments (
                     id BIGINT PRIMARY KEY,
@@ -28,6 +31,10 @@ class VolunteerSchemaInitializer {
                     enrolled_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     service_hours DOUBLE NOT NULL DEFAULT 0,
                     points_earned INT NOT NULL DEFAULT 0,
+                    cancel_reason TEXT NULL,
+                    cancel_requested_at DATETIME NULL,
+                    cancel_review_note VARCHAR(500) NULL,
+                    cancel_reviewed_at DATETIME NULL,
                     INDEX idx_enroll_user (volunteer_user_id),
                     INDEX idx_enroll_activity (activity_id)
                 )
